@@ -32,4 +32,6 @@ router.get("/", (_req: Request, res: Response) => {
   res.json(sorted);
 });
 
+export type runsRouter = typeof router;
+
 export default router;

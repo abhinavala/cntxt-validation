@@ -47,4 +47,6 @@ router.get("/", (req: Request, res: Response) => {
   res.json(filtered);
 });
 
+export type eventsRouter = typeof router;
+
 export default router;

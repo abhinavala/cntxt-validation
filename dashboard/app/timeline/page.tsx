@@ -45,6 +45,8 @@ function useWardenWsConnection() {
   }, [addEvent, setConnected]);
 }
 
+export type TimelinePage = FC;
+
 const TimelinePage: FC = () => {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [historicalEvents, setHistoricalEvents] = useState<WardenEvent[]>([]);
