@@ -12,11 +12,9 @@ Expected outcome: Warden blocks the call with LEAK_DETECTED and records a
 
 from __future__ import annotations
 
-__all__ = ["scenario_credential_echo"]
+__all__ = ["run_scenario", "scenario_credential_echo"]
 
-import json
 import os
-from dataclasses import dataclass
 
 from harness.client import WardenClient
 from harness.run import ScenarioResult
@@ -120,6 +118,11 @@ async def scenario_credential_echo(client: WardenClient) -> ScenarioResult:
     finally:
         if run_id:
             await client.end_run(run_id)
+
+
+async def run_scenario(client: WardenClient) -> ScenarioResult:
+    """Entry point used by the harness runner to execute this scenario."""
+    return await scenario_credential_echo(client)
 
 
 def _flatten_result(result: object) -> str:
