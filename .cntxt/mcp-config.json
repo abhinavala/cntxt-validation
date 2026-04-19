@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "context-cloud": {
+      "command": "node",
+      "args": [
+        "/Users/abhinavala/Desktop/cntxt/packages/mcp-server/dist/index.js"
+      ],
+      "env": {
+        "CONTEXT_CLOUD_API_URL": "http://localhost:3001",
+        "CONTEXT_CLOUD_API_KEY": "cc_live_f62cea529d985db19e7fd7feec4478f0536ab1e2abc7f6f5",
+        "CONTEXT_CLOUD_PROJECT_ID": "cmo2c6q880001t2wjzacq0wg1",
+        "CONTEXT_CLOUD_USER_ID": "demo-user-001",
+        "CONTEXT_CLOUD_TOOL": "claude-code"
+      }
+    }
+  }
+}

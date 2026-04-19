@@ -11,6 +11,9 @@
       "import": "./dist/index.js"
     }
   },
+  "wardenTypes": [
+    "WardenSharedPackage"
+  ],
   "engines": {
     "node": ">=20"
   },
