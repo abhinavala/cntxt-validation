@@ -8,6 +8,15 @@ import { WardenError } from '../../../../shared/src/types/mcp.js';
  * Registers the warden_start_run and warden_end_run MCP tools.
  * Must be called once at startup with the repository dependencies.
  */
+/** Type alias for the registerRunTools function signature */
+export type registerRunTools = typeof registerRunTools;
+
+/** Type alias for the warden_start_run tool handler */
+export type startRunTool = (args: Record<string, unknown>) => Promise<McpToolResult>;
+
+/** Type alias for the warden_end_run tool handler */
+export type endRunTool = (args: Record<string, unknown>) => Promise<McpToolResult>;
+
 export function registerRunTools(deps: LifecycleDeps): void {
   registerTool({
     name: 'warden_start_run',
