@@ -76,3 +76,7 @@ export function addToIndex(value: string): void {
 export function getRegisteredValues(): ReadonlySet<string> {
   return registeredValues;
 }
+
+export type rebuildIndex = typeof rebuildIndex;
+export type addToIndex = typeof addToIndex;
+export type getRegisteredValues = typeof getRegisteredValues;
