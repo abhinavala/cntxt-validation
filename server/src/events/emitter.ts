@@ -22,3 +22,5 @@ export function emitEvent(input: EventInput, repo: EventsRepo): WardenEvent {
 
   return event;
 }
+
+export type { emitEvent };

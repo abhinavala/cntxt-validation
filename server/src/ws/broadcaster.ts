@@ -41,3 +41,6 @@ export const wsBroadcaster = {
 };
 
 export { register, unregister, broadcast, getClientCount };
+
+export type { wsBroadcaster };
+export type { WsClient };
