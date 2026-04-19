@@ -14,6 +14,8 @@ test setup).
 
 from __future__ import annotations
 
+__all__ = ["run_scenario"]
+
 import base64
 import os
 from pathlib import Path
@@ -124,3 +126,8 @@ async def scenario_prompt_injection(client: WardenClient) -> ScenarioResult:
             )
     finally:
         await client.end_run(run_id)
+
+
+async def run_scenario(client: WardenClient) -> ScenarioResult:
+    """Entry point expected by the harness runner."""
+    return await scenario_prompt_injection(client)
