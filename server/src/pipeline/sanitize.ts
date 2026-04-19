@@ -1,6 +1,6 @@
 import { getRegisteredValues } from './credentialIndex';
 
-const REDACTED = '[REDACTED]';
+export const REDACTION_MARKER = '[REDACTED]';
 
 /**
  * Recursively walks any JS value and replaces any occurrence of a registered
@@ -54,7 +54,7 @@ function redactString(str: string, secrets: string[]): string {
   let result = str;
   for (const secret of secrets) {
     if (result.includes(secret)) {
-      result = result.split(secret).join(REDACTED);
+      result = result.split(secret).join(REDACTION_MARKER);
     }
   }
   return result;
