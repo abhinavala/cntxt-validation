@@ -14,6 +14,20 @@ import { WardenError } from '../../shared/src/types/mcp.js';
 import type { WardenEvent } from '../../shared/src/types/events.js';
 
 /**
+ * Type describing the adversarial test suite scenarios.
+ * Each scenario defines a name and a factory that produces a payload
+ * containing the raw token for testing sanitization / leak detection.
+ */
+export interface AdversarialSuite {
+  /** Human-readable scenario name */
+  name: string;
+  /** Factory that produces a payload containing the raw token */
+  buildPayload: (rawToken: string) => unknown;
+  /** Which pipeline stage this scenario targets */
+  stage: 'sanitize' | 'detectLeak' | 'honesty' | 'brokerPipeline';
+}
+
+/**
  * Adversarial sanitizer / leak-detector test suite.
  *
  * Generates a fresh random token per test run so the suite never relies on
