@@ -69,3 +69,6 @@ export async function startMcpServer(app: Hono): Promise<void> {
   // Mount SSE transport on the Hono app at /mcp
   mountSseTransport(app, server as any);
 }
+
+/** Function signature type for startMcpServer */
+export type startMcpServer = typeof startMcpServer;

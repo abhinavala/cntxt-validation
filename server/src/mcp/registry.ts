@@ -1,5 +1,7 @@
 import type { McpToolDefinition } from "../../../shared/src/types/mcp.js";
 
+export type { McpToolDefinition };
+
 /**
  * Module-level registry of MCP tools.
  * Feature tasks (F1-F5) call registerTool() at import time to add their tools.
@@ -20,9 +22,15 @@ export function registerTool(def: McpToolDefinition): void {
   tools.push(def);
 }
 
+/** Function signature type for registerTool */
+export type registerTool = typeof registerTool;
+
 /**
  * Return a shallow copy of all registered tool definitions.
  */
 export function getRegisteredTools(): McpToolDefinition[] {
   return [...tools];
 }
+
+/** Function signature type for getRegisteredTools */
+export type getRegisteredTools = typeof getRegisteredTools;
