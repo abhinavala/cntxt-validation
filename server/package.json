@@ -11,7 +11,8 @@
     "build": "tsc",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --ext .ts",
-    "test": "tsx src/db/__tests__/migrate.test.ts"
+    "test": "tsx src/db/__tests__/migrate.test.ts",
+    "test:adversarial": "vitest run --config vitest.config.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0"
