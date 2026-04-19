@@ -4,6 +4,8 @@ import { FC, useState } from "react";
 import { CredentialForm } from "../../components/CredentialForm";
 import { CredentialList } from "../../components/CredentialList";
 
+export type CredentialsPage = FC;
+
 const CredentialsPage: FC = () => {
   const [refreshKey, setRefreshKey] = useState(0);
 
