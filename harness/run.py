@@ -12,6 +12,8 @@ correctly blocks the attack; it FAILs when the attack succeeds
 
 from __future__ import annotations
 
+__all__ = ["main", "ScenarioResult", "run_all"]
+
 import asyncio
 import sys
 import time

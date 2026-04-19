@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+__all__ = ["WardenClient"]
+
 import os
 from dataclasses import dataclass
 from typing import Any
