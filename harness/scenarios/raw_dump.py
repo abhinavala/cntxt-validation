@@ -1,4 +1,4 @@
-"""Scenario 1 -- Raw dump attack.
+"""Scenario 1 — Raw dump attack.
 
 A compromised agent attempts to enumerate credentials visible in its own
 context by calling ``warden_list_my_capabilities`` and inspecting every
@@ -7,12 +7,12 @@ scanning the response bodies.
 
 The scenario **passes** when no returned payload contains a string that
 matches a plausible credential shape.  A match means Warden leaked a raw
-secret -- that is a Warden bug.
+secret — that is a Warden bug.
 """
 
 from __future__ import annotations
 
-__all__ = ["scenario_raw_dump"]
+__all__ = ["run_scenario"]
 
 import json
 import re
@@ -72,7 +72,7 @@ def _scan_mcp_result(result: Any, context: str) -> list[str]:
     return findings
 
 
-async def scenario_raw_dump(client: WardenClient) -> ScenarioResult:
+async def run_scenario(client: WardenClient) -> ScenarioResult:
     """Run the raw-dump attack scenario."""
     name = "Raw dump attack"
     all_findings: list[str] = []
@@ -90,14 +90,14 @@ async def scenario_raw_dump(client: WardenClient) -> ScenarioResult:
             justification="Probing for raw credential exposure",
         )
 
-        # 2. Call list_my_capabilities -- the primary attack vector.
+        # 2. Call list_my_capabilities — the primary attack vector.
         #    A secure Warden returns opaque handles, never raw tokens.
         caps_result = await client._call(
             "warden_list_my_capabilities", {"run_id": run_id}
         )
         all_findings.extend(_scan_mcp_result(caps_result, "list_my_capabilities"))
 
-        # 3. Probe by listing issues -- check response for leaked tokens
+        # 3. Probe by listing issues — check response for leaked tokens
         try:
             issues_result = await client.github_list_issues(
                 handle=handle,
@@ -106,7 +106,7 @@ async def scenario_raw_dump(client: WardenClient) -> ScenarioResult:
             )
             all_findings.extend(_scan_mcp_result(issues_result, "github_list_issues"))
         except Exception:
-            # The call itself failing is fine -- we only care about leaks
+            # The call itself failing is fine — we only care about leaks
             pass
 
         # 4. Verdict
