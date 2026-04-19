@@ -1,9 +1,12 @@
 import Database from 'better-sqlite3';
 import { runMigrations } from './migrate.js';
 
+export type getDb = () => Database.Database;
+export type closeDb = () => void;
+
 let db: Database.Database | null = null;
 
-export function getDb(): Database.Database {
+export const getDb: getDb = (): Database.Database => {
   if (db) return db;
 
   const dbPath = process.env.WARDEN_DB_PATH ?? './warden.db';
@@ -14,11 +17,11 @@ export function getDb(): Database.Database {
   runMigrations(db);
 
   return db;
-}
+};
 
-export function closeDb(): void {
+export const closeDb: closeDb = (): void => {
   if (db) {
     db.close();
     db = null;
   }
-}
+};
