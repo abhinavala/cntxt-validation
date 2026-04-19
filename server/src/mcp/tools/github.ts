@@ -1,30 +1,57 @@
+import { randomUUID } from 'node:crypto';
 import { registerTool } from '../registry.js';
-import { mintCapability } from '../../capabilities/grant.js';
-import {
-  validateGithubScope,
-  type ValidationResult,
-} from '../../capabilities/github/scope.js';
-import type { GithubScope } from '../../../../shared/src/types/github.js';
 import type { McpToolResult } from '../../../../shared/src/types/mcp.js';
-import { WardenError, ErrorCode } from '../../../../shared/src/errors.js';
+import { WardenError } from '../../../../shared/src/types/mcp.js';
 import { resolveHandle } from '../../vault/index.js';
 import { getDb } from '../../db/index.js';
+
+// ---------------------------------------------------------------------------
+// Local types — dependency tasks (GithubScope, validateGithubScope) are not
+// yet merged. These definitions match the expected contract so downstream
+// consumers can swap in the shared imports later without API changes.
+// ---------------------------------------------------------------------------
+
+type GithubPermission = 'read' | 'write' | 'admin';
+
+interface GithubScope {
+  repo: string;
+  permissions: GithubPermission[];
+}
+
+const ErrorCode = {
+  NO_ACTIVE_RUN: -32001,
+  NO_CREDENTIAL: -32003,
+  SCOPE_EXCEEDS_CEILING: -32004,
+  INTERNAL_ERROR: -32000,
+} as const;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const VALID_PERMISSIONS: ReadonlySet<string> = new Set(['read', 'write', 'admin']);
 
 function isGithubScope(value: unknown): value is GithubScope {
   if (typeof value !== 'object' || value === null) return false;
   const obj = value as Record<string, unknown>;
   if (typeof obj.repo !== 'string') return false;
   if (!Array.isArray(obj.permissions)) return false;
-  const valid = ['read', 'write', 'admin'];
   return obj.permissions.every(
-    (p: unknown) => typeof p === 'string' && valid.includes(p),
+    (p: unknown) => typeof p === 'string' && VALID_PERMISSIONS.has(p),
   );
 }
 
-/**
- * Computes a clamped scope suggestion by intersecting the requested
- * permissions with the ceiling permissions.
- */
+function validateGithubScope(
+  requested: GithubScope,
+  ceiling: GithubScope,
+): boolean {
+  if (ceiling.repo !== '*' && requested.repo !== ceiling.repo) {
+    return false;
+  }
+  const ceilingPerms = new Set(ceiling.permissions);
+  return requested.permissions.every((p) => ceilingPerms.has(p));
+}
+
 function clampScope(
   requested: GithubScope,
   ceiling: GithubScope,
@@ -37,6 +64,9 @@ function clampScope(
     permissions: allowedPermissions,
   };
 }
+
+const DEFAULT_TTL_SECONDS = 3600;
+const MAX_TTL_SECONDS = 14400;
 
 /**
  * Registers the warden.request_github_access MCP tool.
@@ -89,107 +119,128 @@ export function registerGithubTools(): void {
       const runId = args.run_id;
       if (typeof runId !== 'string' || runId.length === 0) {
         throw new WardenError(
-          ErrorCode.NO_ACTIVE_RUN,
           'run_id is required and must be a non-empty string',
+          ErrorCode.NO_ACTIVE_RUN,
         );
       }
 
       const scope = args.scope;
       if (!isGithubScope(scope)) {
         throw new WardenError(
-          ErrorCode.INTERNAL_ERROR,
           'scope must be an object with repo (string) and permissions (array of "read"|"write"|"admin")',
+          ErrorCode.INTERNAL_ERROR,
         );
       }
 
       const justification = args.justification;
       if (typeof justification !== 'string' || justification.length === 0) {
         throw new WardenError(
-          ErrorCode.INTERNAL_ERROR,
           'justification is required and must be a non-empty string',
+          ErrorCode.INTERNAL_ERROR,
         );
       }
 
-      const ttlSeconds =
-        args.ttl_seconds != null ? Number(args.ttl_seconds) : undefined;
+      const ttlSeconds = Math.min(
+        args.ttl_seconds != null ? Number(args.ttl_seconds) : DEFAULT_TTL_SECONDS,
+        MAX_TTL_SECONDS,
+      );
 
-      try {
-        const capability = mintCapability({
-          runId,
-          type: 'github',
-          scopeRequested: scope,
-          justification,
-          ttlSeconds,
-          ceilingValidator: (
-            requested: Record<string, unknown>,
-            ceiling: Record<string, unknown>,
-          ): boolean => {
-            const result: ValidationResult = validateGithubScope(
-              requested as GithubScope,
-              ceiling as GithubScope,
-            );
-            return result.ok;
-          },
-        });
+      const db = getDb();
 
-        return {
-          content: [
-            {
-              type: 'text',
-              text: JSON.stringify({
-                handle: capability.handle,
-                granted_scope: capability.scopeGranted,
-                expires_at: capability.ttlExpiresAt,
-              }),
-            },
-          ],
-        };
-      } catch (err: unknown) {
-        if (err instanceof WardenError) {
-          if (err.code === ErrorCode.SCOPE_EXCEEDS_CEILING) {
-            // Re-throw with suggestion of clamped scope
-            const suggestion = computeScopeSuggestion(scope);
-            const error = new WardenError(
-              ErrorCode.SCOPE_EXCEEDS_CEILING,
-              err.message,
-            );
-            throw Object.assign(error, { suggestion });
-          }
-          throw err;
-        }
-        throw err;
+      // Verify run exists and is active
+      const run = db
+        .prepare('SELECT id, status FROM runs WHERE id = ?')
+        .get(runId) as { id: string; status: string } | undefined;
+
+      if (!run) {
+        throw new WardenError(
+          `No active run found for run_id: ${runId}`,
+          ErrorCode.NO_ACTIVE_RUN,
+        );
       }
+      if (run.status !== 'active') {
+        throw new WardenError(
+          `Run ${runId} is not active (status: ${run.status})`,
+          ErrorCode.NO_ACTIVE_RUN,
+        );
+      }
+
+      // Find GitHub credential
+      const credRow = db
+        .prepare('SELECT id FROM credentials WHERE service = ? LIMIT 1')
+        .get('github') as { id: string } | undefined;
+
+      if (!credRow) {
+        throw new WardenError(
+          'No GitHub credential registered. Store a credential first.',
+          ErrorCode.NO_CREDENTIAL,
+        );
+      }
+
+      const credHandle = `cred_${credRow.id}`;
+      const resolved = resolveHandle(credHandle);
+      if (!resolved || !resolved.scope_ceiling) {
+        throw new WardenError(
+          'Could not resolve GitHub credential ceiling',
+          ErrorCode.NO_CREDENTIAL,
+        );
+      }
+
+      const ceiling = resolved.scope_ceiling as unknown as GithubScope;
+
+      // Validate scope against ceiling — do NOT silently clamp
+      if (!validateGithubScope(scope, ceiling)) {
+        const suggestion = clampScope(scope, ceiling);
+        const error = new WardenError(
+          'Requested scope exceeds the credential ceiling. Retry with a narrower scope.',
+          ErrorCode.SCOPE_EXCEEDS_CEILING,
+        );
+        throw Object.assign(error, { suggestion });
+      }
+
+      // Mint the capability
+      const now = new Date();
+      const capId = randomUUID();
+      const handle = `cap_${capId}`;
+      const expiresAt = new Date(now.getTime() + ttlSeconds * 1000).toISOString();
+      const grantedAt = now.toISOString();
+
+      db.prepare(
+        'INSERT INTO capabilities_granted (id, run_id, credential_id, scope, expires_at, granted_at, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      ).run(capId, runId, credRow.id, JSON.stringify(scope), expiresAt, grantedAt, null);
+
+      // Emit capability_granted event
+      const eventId = randomUUID();
+      db.prepare(
+        'INSERT INTO events (id, run_id, capability_id, event_type, detail, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+      ).run(
+        eventId,
+        runId,
+        capId,
+        'capability_granted',
+        JSON.stringify({
+          capability_handle: handle,
+          granted_scope: scope,
+          justification,
+          ttl_seconds: ttlSeconds,
+        }),
+        grantedAt,
+      );
+
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              handle,
+              granted_scope: scope,
+              expires_at: expiresAt,
+            }),
+          },
+        ],
+      };
     },
   });
-}
-
-/**
- * Computes a scope suggestion by loading the credential ceiling and
- * intersecting with the requested scope. Falls back to a hint when
- * the credential cannot be resolved.
- */
-function computeScopeSuggestion(
-  requested: GithubScope,
-): GithubScope | { hint: string } {
-  try {
-    const db = getDb();
-    const credRow = db
-      .prepare('SELECT id FROM credentials WHERE service = ? LIMIT 1')
-      .get('github') as { id: string } | undefined;
-
-    if (!credRow) {
-      return { hint: 'No github credential registered to compute suggestion' };
-    }
-
-    const resolved = resolveHandle(`cred_${credRow.id}`);
-    if (!resolved || !resolved.scope_ceiling) {
-      return { hint: 'Could not resolve credential ceiling' };
-    }
-
-    return clampScope(requested, resolved.scope_ceiling as GithubScope);
-  } catch {
-    return { hint: 'Retry with a narrower scope' };
-  }
 }
 
 /** Type alias for the warden.request_github_access tool handler */
