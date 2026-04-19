@@ -248,3 +248,11 @@ export async function getRepoContents(
 
 export { brokerCall };
 export type { BrokerCallInput };
+
+/** Aggregate type for all GitHub proxy operations */
+export interface githubOps {
+  createPr: typeof createPr;
+  listIssues: typeof listIssues;
+  createComment: typeof createComment;
+  getRepoContents: typeof getRepoContents;
+}

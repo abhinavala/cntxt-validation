@@ -407,3 +407,10 @@ export function registerGithubTools(): void {
 export type requestGithubAccessTool = (args: Record<string, unknown>) => Promise<McpToolResult>;
 
 export type registerGithubTools = typeof registerGithubTools;
+
+/** Type representing the GitHub operation tool names registered by this module */
+export type githubOperationTools =
+  | 'warden.github.create_pr'
+  | 'warden.github.list_issues'
+  | 'warden.github.create_comment'
+  | 'warden.github.get_repo_contents';
