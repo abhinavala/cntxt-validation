@@ -29,9 +29,11 @@ export const useWsStore = create<WsStore>((set) => ({
 const WS_URL =
   process.env.NEXT_PUBLIC_WARDEN_WS_URL ?? "ws://localhost:3000/ws";
 
-export function useWardenEvents() {
+export type useWardenEvents = () => WsEvent[];
+
+export const useWardenEvents: useWardenEvents = () => {
   return useWsStore((state) => state.events);
-}
+};
 
 export function useWardenWs() {
   const { addEvent, setConnected } = useWsStore();

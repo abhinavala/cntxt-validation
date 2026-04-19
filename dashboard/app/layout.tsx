@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
 
+export type RootLayout = React.FC<{ children: React.ReactNode }>;
+
 export const metadata: Metadata = {
   title: "Warden Dashboard",
   description: "Warden monitoring dashboard",
 };
 
-export function RootLayout({
+export function RootLayoutComponent({
   children,
 }: {
   children: React.ReactNode;
@@ -38,4 +40,4 @@ export function RootLayout({
   );
 }
 
-export default RootLayout;
+export default RootLayoutComponent;
