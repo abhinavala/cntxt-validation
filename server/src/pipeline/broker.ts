@@ -12,7 +12,7 @@ export const REVOKED = -32004;
 export const EXPIRED = -32005;
 export const NO_ACTIVE_RUN = -32006;
 
-export interface BrokerCtx {
+export interface BrokerContext {
   capabilityId: string;
   toolName: string;
   args: Record<string, unknown>;
@@ -20,6 +20,9 @@ export interface BrokerCtx {
   runsRepo: RunsRepo;
   eventsRepo: EventsRepo;
 }
+
+/** @deprecated Use BrokerContext instead. */
+export type BrokerCtx = BrokerContext;
 
 /**
  * Single wrapper every brokered operation calls.
@@ -38,7 +41,7 @@ export interface BrokerCtx {
  * Errors during fn are caught, emitted as tool_called with outcome=error, and rethrown.
  */
 export async function brokerCall<T>(
-  ctx: BrokerCtx,
+  ctx: BrokerContext,
   fn: (rawValue: string) => T | Promise<T>,
 ): Promise<T> {
   // 1. Resolve capability
