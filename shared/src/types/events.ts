@@ -1,4 +1,4 @@
-export const WardenEventType = {
+export const EventType = {
   capability_granted: 'capability_granted',
   capability_revoked: 'capability_revoked',
   tool_called: 'tool_called',
@@ -9,13 +9,13 @@ export const WardenEventType = {
   ttl_expired: 'ttl_expired',
 } as const;
 
-export type WardenEventType = (typeof WardenEventType)[keyof typeof WardenEventType];
+export type EventType = (typeof EventType)[keyof typeof EventType];
 
-export interface EmitEventInput {
+export interface EventInput {
   id: string;
   run_id: string;
   capability_id?: string | null;
-  event_type: WardenEventType;
+  event_type: EventType;
   detail?: string | null;
 }
 
@@ -23,7 +23,7 @@ export interface WardenEvent {
   id: string;
   run_id: string;
   capability_id: string | null;
-  event_type: WardenEventType;
+  event_type: EventType;
   detail: string | null;
   created_at: string;
 }

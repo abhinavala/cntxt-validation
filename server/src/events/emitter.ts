@@ -1,8 +1,8 @@
 import type { EventsRepo } from '../db/repos/events.js';
-import type { EmitEventInput, WardenEvent } from '../../../shared/src/types/events.js';
+import type { EventInput, WardenEvent } from '../../../shared/src/types/events.js';
 import { broadcast } from '../ws/broadcaster.js';
 
-export function emitEvent(input: EmitEventInput, repo: EventsRepo): WardenEvent {
+export function emitEvent(input: EventInput, repo: EventsRepo): WardenEvent {
   const created_at = new Date().toISOString();
 
   const row = {

@@ -7,15 +7,15 @@ const OPEN = 1;
 
 const clients = new Set<WsClient>();
 
-export function register(client: WsClient): void {
+function register(client: WsClient): void {
   clients.add(client);
 }
 
-export function unregister(client: WsClient): void {
+function unregister(client: WsClient): void {
   clients.delete(client);
 }
 
-export function broadcast(json: string): void {
+function broadcast(json: string): void {
   for (const client of clients) {
     if (client.readyState === OPEN) {
       try {
@@ -29,6 +29,15 @@ export function broadcast(json: string): void {
   }
 }
 
-export function getClientCount(): number {
+function getClientCount(): number {
   return clients.size;
 }
+
+export const wsBroadcaster = {
+  register,
+  unregister,
+  broadcast,
+  getClientCount,
+};
+
+export { register, unregister, broadcast, getClientCount };

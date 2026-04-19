@@ -4,7 +4,7 @@ import { EventsRepo } from '../../db/repos/events.js';
 import { RunsRepo } from '../../db/repos/runs.js';
 import { emitEvent } from '../emitter.js';
 import { register, unregister } from '../../ws/broadcaster.js';
-import { WardenEventType } from '../../../../shared/src/types/events.js';
+import { EventType } from '../../../../shared/src/types/events.js';
 import type { WsClient } from '../../ws/broadcaster.js';
 import { unlinkSync } from 'node:fs';
 
@@ -48,7 +48,7 @@ console.log('Test 1: 3 clients receive broadcast, DB row created');
   const event = emitEvent({
     id: 'evt-e1',
     run_id: 'run-e1',
-    event_type: WardenEventType.run_started,
+    event_type: EventType.run_started,
     detail: 'test run started',
   }, eventsRepo);
 
@@ -87,7 +87,7 @@ console.log('\nTest 2: disconnected client removed, remaining 2 receive broadcas
   const event = emitEvent({
     id: 'evt-e2',
     run_id: 'run-e1',
-    event_type: WardenEventType.tool_called,
+    event_type: EventType.tool_called,
     detail: 'called some tool',
   }, eventsRepo);
 
