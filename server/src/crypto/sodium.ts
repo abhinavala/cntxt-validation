@@ -32,6 +32,10 @@ export function encrypt(plaintext: string): string {
  * Decrypts a base64 string (nonce + ciphertext) back to the original plaintext.
  * Throws if decryption fails (wrong key, tampered data, etc.).
  */
+export type initCrypto = typeof initCrypto;
+export type encrypt = typeof encrypt;
+export type decrypt = typeof decrypt;
+
 export function decrypt(ciphertext: string): string {
   const key = getMasterKey();
   const combined = sodium.from_base64(

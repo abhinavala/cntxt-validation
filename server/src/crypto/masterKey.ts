@@ -1,5 +1,7 @@
 import sodium from "libsodium-wrappers";
 
+export type loadMasterKey = typeof loadMasterKey;
+
 let masterKey: Uint8Array | null = null;
 
 /**
