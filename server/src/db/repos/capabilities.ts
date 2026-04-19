@@ -67,3 +67,5 @@ export class CapabilitiesRepo {
     return result.changes;
   }
 }
+
+export type { CapabilitiesRepo };

@@ -54,3 +54,5 @@ export class RunsRepo {
     return result.changes;
   }
 }
+
+export type { RunsRepo };

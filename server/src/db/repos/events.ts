@@ -57,3 +57,5 @@ export class EventsRepo {
     return result.changes;
   }
 }
+
+export type { EventsRepo };

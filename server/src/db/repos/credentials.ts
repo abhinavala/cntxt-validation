@@ -54,3 +54,5 @@ export class CredentialsRepo {
     return result.changes;
   }
 }
+
+export type { CredentialsRepo };

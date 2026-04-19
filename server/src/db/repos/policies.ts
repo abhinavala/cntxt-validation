@@ -54,3 +54,5 @@ export class PoliciesRepo {
     return result.changes;
   }
 }
+
+export type { PoliciesRepo };
