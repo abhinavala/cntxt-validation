@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Warden monitoring dashboard",
 };
 
-export default function RootLayout({
+export function RootLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -37,3 +37,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+export default RootLayout;

@@ -14,6 +14,10 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const wardenApi = {
+export type WardenApi = {
+  fetchJson: typeof fetchJson;
+};
+
+export const wardenApi: WardenApi = {
   fetchJson,
 };
