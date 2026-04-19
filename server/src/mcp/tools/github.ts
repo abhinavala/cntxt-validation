@@ -4,6 +4,12 @@ import type { McpToolResult } from '../../../../shared/src/types/mcp.js';
 import { WardenError } from '../../../../shared/src/types/mcp.js';
 import { resolveHandle } from '../../vault/index.js';
 import { getDb } from '../../db/index.js';
+import {
+  createPr,
+  listIssues,
+  createComment,
+  getRepoContents,
+} from '../../capabilities/github/ops.js';
 
 // ---------------------------------------------------------------------------
 // Local types — dependency tasks (GithubScope, validateGithubScope) are not
@@ -241,9 +247,170 @@ export function registerGithubTools(): void {
       };
     },
   });
+
+  // -------------------------------------------------------------------------
+  // warden.github.create_pr
+  // -------------------------------------------------------------------------
+  registerTool({
+    name: 'warden.github.create_pr',
+    description:
+      'Create a pull request on GitHub. Use the handle from request_github_access, not a raw token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        handle: {
+          type: 'string',
+          description: 'Capability handle from warden.request_github_access',
+        },
+        repo: {
+          type: 'string',
+          description: 'Repository in "owner/repo" format',
+        },
+        title: { type: 'string', description: 'PR title' },
+        body: { type: 'string', description: 'PR body/description' },
+        base: { type: 'string', description: 'Base branch (e.g. "main")' },
+        head: { type: 'string', description: 'Head branch with changes' },
+      },
+      required: ['handle', 'repo', 'title', 'body', 'base', 'head'],
+    },
+    handler: async (args: Record<string, unknown>): Promise<McpToolResult> => {
+      const handle = args.handle as string;
+      const result = await createPr(handle, {
+        repo: args.repo as string,
+        title: args.title as string,
+        body: args.body as string,
+        base: args.base as string,
+        head: args.head as string,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+      };
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // warden.github.list_issues
+  // -------------------------------------------------------------------------
+  registerTool({
+    name: 'warden.github.list_issues',
+    description:
+      'List issues for a GitHub repository. Use the handle from request_github_access, not a raw token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        handle: {
+          type: 'string',
+          description: 'Capability handle from warden.request_github_access',
+        },
+        repo: {
+          type: 'string',
+          description: 'Repository in "owner/repo" format',
+        },
+        state: {
+          type: 'string',
+          enum: ['open', 'closed', 'all'],
+          description: 'Filter by issue state (defaults to "open")',
+        },
+      },
+      required: ['handle', 'repo'],
+    },
+    handler: async (args: Record<string, unknown>): Promise<McpToolResult> => {
+      const handle = args.handle as string;
+      const result = await listIssues(handle, {
+        repo: args.repo as string,
+        state: args.state as 'open' | 'closed' | 'all' | undefined,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+      };
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // warden.github.create_comment
+  // -------------------------------------------------------------------------
+  registerTool({
+    name: 'warden.github.create_comment',
+    description:
+      'Create a comment on a GitHub issue or pull request. Use the handle from request_github_access, not a raw token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        handle: {
+          type: 'string',
+          description: 'Capability handle from warden.request_github_access',
+        },
+        repo: {
+          type: 'string',
+          description: 'Repository in "owner/repo" format',
+        },
+        issue_number: {
+          type: 'number',
+          description: 'Issue or PR number to comment on',
+        },
+        body: { type: 'string', description: 'Comment body text' },
+      },
+      required: ['handle', 'repo', 'issue_number', 'body'],
+    },
+    handler: async (args: Record<string, unknown>): Promise<McpToolResult> => {
+      const handle = args.handle as string;
+      const result = await createComment(handle, {
+        repo: args.repo as string,
+        issue_number: args.issue_number as number,
+        body: args.body as string,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+      };
+    },
+  });
+
+  // -------------------------------------------------------------------------
+  // warden.github.get_repo_contents
+  // -------------------------------------------------------------------------
+  registerTool({
+    name: 'warden.github.get_repo_contents',
+    description:
+      'Get the contents of a file or directory in a GitHub repository. Use the handle from request_github_access, not a raw token.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        handle: {
+          type: 'string',
+          description: 'Capability handle from warden.request_github_access',
+        },
+        repo: {
+          type: 'string',
+          description: 'Repository in "owner/repo" format',
+        },
+        path: {
+          type: 'string',
+          description: 'Path to file or directory within the repo',
+        },
+      },
+      required: ['handle', 'repo', 'path'],
+    },
+    handler: async (args: Record<string, unknown>): Promise<McpToolResult> => {
+      const handle = args.handle as string;
+      const result = await getRepoContents(handle, {
+        repo: args.repo as string,
+        path: args.path as string,
+      });
+      return {
+        content: [{ type: 'text', text: JSON.stringify(result) }],
+      };
+    },
+  });
 }
 
 /** Type alias for the warden.request_github_access tool handler */
 export type requestGithubAccessTool = (args: Record<string, unknown>) => Promise<McpToolResult>;
 
 export type registerGithubTools = typeof registerGithubTools;
+
+/** Type representing the GitHub operation tool names registered by this module */
+export type githubOperationTools =
+  | 'warden.github.create_pr'
+  | 'warden.github.list_issues'
+  | 'warden.github.create_comment'
+  | 'warden.github.get_repo_contents';
