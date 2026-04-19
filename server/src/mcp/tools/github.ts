@@ -192,4 +192,7 @@ function computeScopeSuggestion(
   }
 }
 
+/** Type alias for the warden.request_github_access tool handler */
+export type requestGithubAccessTool = (args: Record<string, unknown>) => Promise<McpToolResult>;
+
 export type registerGithubTools = typeof registerGithubTools;
