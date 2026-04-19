@@ -20,4 +20,5 @@ export class WardenError extends Error {
   }
 }
 
-export type { ErrorCode as ErrorCodeType };
+export type WardenErrorClass = typeof WardenError;
+export type ErrorCodeEnum = typeof ErrorCode;
